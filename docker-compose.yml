@@ -40,9 +40,24 @@ services:
     networks:
       - backend
     depends_on:
+      - autenticacion
       - db_gateway
       - instituciones
       - rutas
+  
+  autenticacion:
+    build:
+      context: ./autenticacion
+      dockerfile: Dockerfile
+    container_name: autenticacion
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+    depends_on:
+      - db_autenticacion
+    volumes:
+      - ./autenticacion:/app  # Volume asociado al WORKDIR del Dockerfile
 
   db_institucion:
     image: postgres:13
@@ -82,6 +97,19 @@ services:
       - "5434:5432"
     networks:
       - backend
+
+  db_autenticacion:
+    image: postgres:13
+    volumes:
+      - postgres_data_autenticacion:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=autenticacion
+      - POSTGRES_USER=brian
+      - POSTGRES_PASSWORD=parada2023
+    ports:
+      - "5435:5432"
+    networks:
+      - backend
     
 networks:
   backend:
@@ -91,3 +119,4 @@ volumes:
   postgres_data_instituciones:
   postgres_data_ruta:
   postgres_data_gateway: 
+  postgres_data_autenticacion:

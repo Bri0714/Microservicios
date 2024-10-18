@@ -52,7 +52,6 @@ LOCAL_APPS = (
 THIRD_PARTY_APPS = (
     'rest_framework',
     'corsheaders',
-    'user_api.apps.UserApiConfig',
 )
 
 # DEFINICION DE APLICACIONES EN PYTHON 
@@ -91,7 +90,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'autenticacion_service.wsgi.application'
 
 ## User model
-AUTH_USER_MODEL = 'user_api.AppUser'
+AUTH_USER_MODEL = 'api.AppUser'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (

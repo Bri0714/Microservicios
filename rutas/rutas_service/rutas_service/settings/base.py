@@ -51,6 +51,7 @@ LOCAL_APPS = (
 # APLICACIONES DE TERCEROS
 THIRD_PARTY_APPS = (
     'rest_framework',
+    'corsheaders',
 )
 
 # DEFINICION DE APLICACIONES EN PYTHON 
@@ -58,6 +59,7 @@ INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

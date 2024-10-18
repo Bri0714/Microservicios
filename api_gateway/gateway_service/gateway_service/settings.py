@@ -28,6 +28,11 @@ DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'gateway']
 
 
+CORS_ALLOWED_ORIGINS = ['http://localhost','http://127.0.0.1','http://0.0.0.0',' http://localhost:5173']
+
+CORS_ALLOW_CREDENTIALS = True
+
+
 
 # Application definition
 
@@ -39,11 +44,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'api',
 ]
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

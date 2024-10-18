@@ -1,0 +1,38 @@
+# Ignorar entornos virtuales
+**/venv/
+**/__pycache__/
+
+# Ignorar archivos de configuración del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos relacionados con Python
+*.pyc
+*.pyo
+*.pyd
+*.env
+*.coverage
+*.egg-info/
+
+# Ignorar archivos de logs
+*.log
+*.out
+
+# Ignorar carpetas de dependencias
+node_modules/
+pip-wheel-metadata/
+.Python
+
+# Ignorar Docker y archivos de volúmenes
+**/postgres_data/
+**/volumes/
+
+# Ignorar archivos generados por el editor
+.vscode/
+.idea/
+
+# Ignorar carpetas o archivos que son subidos automáticamente por Docker
+**/.dockerignore
+
+# Ignorar el archivo secrets.json
+secrets.json

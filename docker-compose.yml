@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  instituciones:
+    build:
+      context: ./instituciones
+      dockerfile: Dockerfile
+    container_name: instituciones
+    ports:
+      - "8001:8001"
+    networks:
+      - backend
+    depends_on:
+      - db_institucion
+    volumes:
+      - ./instituciones:/app  # Volume asociado al WORKDIR del Dockerfile
+
+  rutas:
+    build:
+      context: ./rutas
+      dockerfile: Dockerfile
+    container_name: rutas
+    ports:
+      - "8002:8002"
+    networks:
+      - backend
+    depends_on:
+      - instituciones
+      - db_ruta
+    volumes:
+      - ./rutas:/app  # Volume asociado al WORKDIR del Dockerfile
+
+  gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "8003:8003"
+    networks:
+      - backend
+    depends_on:
+      - db_gateway
+      - instituciones
+      - rutas
+
+  db_institucion:
+    image: postgres:13
+    volumes:
+      - postgres_data_instituciones:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=instituciones
+      - POSTGRES_USER=brian
+      - POSTGRES_PASSWORD=parada2023
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+  db_ruta:
+    image: postgres:13
+    volumes:
+      - postgres_data_ruta:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=ruta
+      - POSTGRES_USER=brian
+      - POSTGRES_PASSWORD=parada2023
+    ports:
+      - "5433:5432"
+    networks:
+      - backend
+
+  db_gateway:
+    image: postgres:13
+    volumes:
+      - postgres_data_gateway:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=gateway
+      - POSTGRES_USER=brian
+      - POSTGRES_PASSWORD=parada2023
+    ports:
+      - "5434:5432"
+    networks:
+      - backend
+    
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres_data_instituciones:
+  postgres_data_ruta:
+  postgres_data_gateway: 

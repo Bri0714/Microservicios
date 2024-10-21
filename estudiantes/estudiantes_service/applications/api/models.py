@@ -29,3 +29,6 @@ class Estudiante(models.Model):
     estudiante_edad = models.PositiveIntegerField(null=False, blank=False)
     estudiante_curso = models.CharField(max_length=50, null=False, blank=False)
     estudiante_direccion = models.CharField(max_length=255, null=False, blank=False)  
+
+    def __str__(self):
+        return f"{self.estudiante_nombre} {self.estudiante_apellido}"

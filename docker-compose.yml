@@ -59,6 +59,23 @@ services:
     volumes:
       - ./autenticacion:/app  # Volume asociado al WORKDIR del Dockerfile
 
+  estudiantes:
+    build:
+      context: ./estudiantes
+      dockerfile: Dockerfile
+    container_name: estudiantes
+    ports:
+      - "8004:8004"
+    networks:
+      - backend
+    depends_on:
+      - db_autenticacion
+      - db_estudiante
+      - rutas
+      - instituciones
+    volumes:
+      - ./estudiantes:/app  # Volume asociado al WORKDIR del Dockerfile
+
   db_institucion:
     image: postgres:13
     volumes:
@@ -110,6 +127,20 @@ services:
       - "5435:5432"
     networks:
       - backend
+
+  
+  db_estudiante:
+    image: postgres:13
+    volumes:
+      - postgres_data_estudiante:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=estudiante
+      - POSTGRES_USER=brian
+      - POSTGRES_PASSWORD=parada2023
+    ports:
+      - "5436:5432"
+    networks:
+      - backend
     
 networks:
   backend:
@@ -120,3 +151,4 @@ volumes:
   postgres_data_ruta:
   postgres_data_gateway: 
   postgres_data_autenticacion:
+  postgres_data_estudiante:

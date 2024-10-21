@@ -1,22 +1,3 @@
-#from rest_framework import serializers
-#from .models import Ruta
-#
-#class RutaSerializer(serializers.ModelSerializer):
-#    institucion = serializers.SerializerMethodField()
-#    
-#    class Meta:
-#        model = Ruta
-#        fields = '__all__'
-#        
-#    # rutas/api/serializers.py
-#    def get_institucion(self, obj):
-#        import requests
-#        response = requests.get(f'http://instituciones:8001/api/instituciones/{obj.institucion_id}/')
-#        if response.status_code == 200:
-#            return response.json()
-#        return None
-#
-
 from rest_framework import serializers
 from .models import Ruta
 import requests

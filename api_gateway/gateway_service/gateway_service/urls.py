@@ -15,13 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import InstitucionesWithRutasView, InstitutionWithRoutesView, EstudiantesPorInstitucionYRutaView
+from api.views import InstitutionWithRoutesView, EstudiantesPorInstitucionYRutaView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Ruta para obtener todas las rutas con la información de las instituciones
-    path('api/rutas_with_instituciones/', InstitucionesWithRutasView.as_view()),
-
+    
     # Ruta para obtener una institución específica con sus rutas asociadas
     path('api/instituciones/<int:institucion_id>/rutas/', InstitutionWithRoutesView.as_view()),
     

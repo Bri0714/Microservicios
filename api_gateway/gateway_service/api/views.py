@@ -3,44 +3,6 @@ from rest_framework.response import Response
 from rest_framework import status
 import requests
 
-# Clase original para obtener instituciones con rutas
-class InstitucionesWithRutasView(APIView):
-    def get(self, request):
-        try:
-            # Solicitar la información de rutas
-            rutas_response = requests.get('http://rutas:8002/api/rutas/')
-            rutas_response.raise_for_status()  # Levanta una excepción si el código de estado no es 200
-
-        except requests.exceptions.ConnectionError:
-            return Response({'error': 'Error de conexión al servicio de rutas'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        except requests.exceptions.Timeout:
-            return Response({'error': 'Tiempo de espera agotado al obtener rutas'}, status=status.HTTP_504_GATEWAY_TIMEOUT)
-
-        except requests.exceptions.RequestException as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        rutas = rutas_response.json()
-
-        for ruta in rutas:
-            institucion_id = ruta.get('institucion_id')
-            try:
-                # Solicitar la información de la institución para cada ruta
-                institucion_response = requests.get(f'http://instituciones:8001/api/instituciones/{institucion_id}/')
-                institucion_response.raise_for_status()
-
-                # Solo agregar el ID y el nombre de la institución
-                institucion_data = institucion_response.json()
-                ruta['institucion'] = {
-                    'id': institucion_data.get('id'),
-                    'institucion_nombre': institucion_data.get('institucion_nombre')
-                }
-                
-            except requests.exceptions.RequestException:
-                ruta['institucion'] = None
-
-        return Response(rutas, status=status.HTTP_200_OK)
-
 # Nueva clase para obtener la información de una institución y sus rutas asociadas
 class InstitutionWithRoutesView(APIView):
     def get(self, request, institucion_id):
@@ -76,8 +38,13 @@ class InstitutionWithRoutesView(APIView):
         except requests.exceptions.RequestException as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Unir los datos de la institución y las rutas
-        institucion_data['rutas'] = rutas_data
+        # Verificar si hay rutas asociadas a la institución
+        rutas_asociadas = [ruta for ruta in rutas_data if ruta.get('institucion_id') == institucion_id]
+        institucion_data['rutas'] = rutas_asociadas
+
+        # Validar si no existen rutas asociadas
+        if not rutas_asociadas:
+            institucion_data['mensaje'] = "No hay rutas asociadas a esta institución."
 
         return Response(institucion_data, status=status.HTTP_200_OK)
 
@@ -99,6 +66,10 @@ class EstudiantesPorInstitucionYRutaView(APIView):
                 return Response({'error': f'La ruta con ID {ruta_id} no existe.'}, status=status.HTTP_404_NOT_FOUND)
             ruta_data = ruta_response.json()
 
+            # Validar que la ruta esté asociada a la institución
+            if ruta_data.get('institucion_id') != institucion_id:
+                return Response({'error': f'La ruta con ID {ruta_id} no está asociada a la institución con ID {institucion_id}.'}, status=status.HTTP_400_BAD_REQUEST)
+
             # Obtener estudiantes por institucion_id y ruta_id
             estudiantes_response = requests.get(f'http://estudiantes:8004/api/estudiantes/?colegio_id={institucion_id}&ruta_id={ruta_id}')
             if estudiantes_response.status_code != 200:
@@ -106,6 +77,9 @@ class EstudiantesPorInstitucionYRutaView(APIView):
                 return Response({'error': 'Error fetching estudiantes', 'details': estudiantes_response.text}, status=estudiantes_response.status_code)
 
             estudiantes = estudiantes_response.json()
+
+            # Filtrar solo los estudiantes que pertenecen a la institución y ruta especificada
+            estudiantes_filtrados = [est for est in estudiantes if est['colegio_id'] == institucion_id and est['ruta_id'] == ruta_id]
 
             # Modificar la respuesta para que sea más fácil de consumir
             response_data = {
@@ -121,18 +95,19 @@ class EstudiantesPorInstitucionYRutaView(APIView):
             }
 
             # Añadir los datos de los estudiantes
-            for estudiante in estudiantes:
-                if estudiante['colegio_id'] == institucion_id and estudiante['ruta_id'] == ruta_id:
-                    estudiante_data = {
-                        "id": estudiante["id"],
-                        "nombre": estudiante["estudiante_nombre"],
-                        "apellido": estudiante["estudiante_apellido"],
-                        "edad": estudiante["estudiante_edad"],
-                        "curso": estudiante["estudiante_curso"],
-                        "direccion": estudiante["estudiante_direccion"],
-                        "acudiente": estudiante["acudiente"]
-                    }
-                    response_data["estudiantes"].append(estudiante_data)
+            for estudiante in estudiantes_filtrados:
+                estudiante_data = {
+                    "id": estudiante["id"],
+                    "nombre": estudiante["estudiante_nombre"],
+                    "apellido": estudiante["estudiante_apellido"],
+                    "edad": estudiante["estudiante_edad"],
+                    "curso": estudiante["estudiante_curso"],
+                    "direccion": estudiante["estudiante_direccion"],
+                    "colegio_id": estudiante["colegio_id"],
+                    "ruta_id": estudiante["ruta_id"],
+                    "acudiente": estudiante["acudiente"]
+                }
+                response_data["estudiantes"].append(estudiante_data)
 
             return Response(response_data, status=status.HTTP_200_OK)
 

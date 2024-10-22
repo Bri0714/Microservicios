@@ -24,7 +24,7 @@ class InstitutionWithRoutesView(APIView):
 
         try:
             # Solicitar las rutas asociadas a la institución
-            rutas_response = requests.get(f'http://rutas:8002/api/rutas/?institucion_id={institucion_id}')
+            rutas_response = requests.get(f'http://rutas:8002/api/rutas/?instituciones_ids={institucion_id}')
             rutas_response.raise_for_status()
 
             rutas_data = rutas_response.json()
@@ -39,7 +39,7 @@ class InstitutionWithRoutesView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Verificar si hay rutas asociadas a la institución
-        rutas_asociadas = [ruta for ruta in rutas_data if ruta.get('institucion_id') == institucion_id]
+        rutas_asociadas = [ruta for ruta in rutas_data if institucion_id in ruta.get('instituciones_ids', [])]
         institucion_data['rutas'] = rutas_asociadas
 
         # Validar si no existen rutas asociadas
@@ -49,11 +49,9 @@ class InstitutionWithRoutesView(APIView):
         return Response(institucion_data, status=status.HTTP_200_OK)
 
 # Nueva clase para obtener la información de los estudiantes asociados a una ruta y institucion especifica 
-
 class EstudiantesPorInstitucionYRutaView(APIView):
     def get(self, request, institucion_id, ruta_id):
         try:
-            print(f"Intentando obtener estudiantes para institucion_id={institucion_id}, ruta_id={ruta_id}")
             # Validar existencia de la institución
             institucion_response = requests.get(f'http://instituciones:8001/api/instituciones/{institucion_id}/')
             if institucion_response.status_code != 200:
@@ -67,13 +65,12 @@ class EstudiantesPorInstitucionYRutaView(APIView):
             ruta_data = ruta_response.json()
 
             # Validar que la ruta esté asociada a la institución
-            if ruta_data.get('institucion_id') != institucion_id:
+            if institucion_id not in ruta_data.get('instituciones_ids', []):
                 return Response({'error': f'La ruta con ID {ruta_id} no está asociada a la institución con ID {institucion_id}.'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Obtener estudiantes por institucion_id y ruta_id
             estudiantes_response = requests.get(f'http://estudiantes:8004/api/estudiantes/?colegio_id={institucion_id}&ruta_id={ruta_id}')
             if estudiantes_response.status_code != 200:
-                print(f"Error obteniendo estudiantes: {estudiantes_response.text}")
                 return Response({'error': 'Error fetching estudiantes', 'details': estudiantes_response.text}, status=estudiantes_response.status_code)
 
             estudiantes = estudiantes_response.json()
@@ -112,8 +109,6 @@ class EstudiantesPorInstitucionYRutaView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
 
         except requests.exceptions.RequestException as e:
-            print(f"Error en la solicitud: {str(e)}")
             return Response({'error': 'Service request failed', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception as e:
-            print(f"Error inesperado: {str(e)}")
             return Response({'error': 'An unexpected error occurred', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

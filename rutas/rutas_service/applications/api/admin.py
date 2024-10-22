@@ -7,6 +7,6 @@ from .models import Ruta
 class RutaAdmin(admin.ModelAdmin):
     list_display = (
         'ruta_movil',
-        'institucion_id',
+        'instituciones_ids',
         'activa'
     )

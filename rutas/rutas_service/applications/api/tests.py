@@ -1,161 +1,123 @@
-from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
+from django.urls import reverse
 from unittest.mock import patch
-from applications.api.models import Ruta
-from applications.api.serializers import RutaSerializer
+from .models import Ruta
 
-"""
-- RutaModelTest: Verifica que el modelo de ruta funcione correctamente, que se pueda crear una ruta, y que el método __str__ funcione como se espera.
-- RutaAPITestCase: Verifica que las operaciones CRUD funcionen correctamente en la API de rutas. Incluye pruebas para crear, listar, actualizar y eliminar rutas.
-- RutaSerializerTest: Verifica que el serializador funcione correctamente. Se prueban casos de datos válidos e inválidos.
-"""
-
-# Pruebas para el modelo Ruta
-class RutaModelTest(TestCase):
-    def setUp(self):
-        # Configuración inicial para las pruebas del modelo Ruta
-        self.ruta_data = {
-            'ruta_nombre': 'Ruta 1',
-            'ruta_movil': 12345,
-            'institucion_id': 1,  # Este ID será simulado en los tests
-            'activa': True
-        }
-
-    def test_create_ruta(self):
-        # Verifica que se pueda crear una ruta y que se guarde correctamente
-        ruta = Ruta.objects.create(**self.ruta_data)
-        self.assertIsInstance(ruta, Ruta)
-        self.assertEqual(ruta.ruta_nombre, 'Ruta 1')
-
-    def test_ruta_str(self):
-        # Verifica que el método __str__ del modelo Ruta devuelva el nombre y móvil de la ruta
-        ruta = Ruta.objects.create(**self.ruta_data)
-        self.assertEqual(str(ruta), f"{ruta.ruta_nombre} - {ruta.ruta_movil}")
-
-# Pruebas para la API de Rutas
-class RutaAPITestCase(APITestCase):
-
-    @patch('applications.api.serializers.requests.get')  # Simula la solicitud al servicio de Instituciones
+class RutaTests(APITestCase):
+    @patch('applications.api.serializers.requests.get')
     def setUp(self, mock_get):
-        # Simula que la institución existe en el servicio de Instituciones
+        # Simular las respuestas del servicio de Instituciones
         mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            'id': 1,
-            'institucion_nombre': 'Colegio San Jose',
-            'institucion_nit': '901.316.552'
-        }
+        mock_get.return_value.json.side_effect = [
+            {
+                "id": 1,
+                "institucion_nombre": "Instituto Infantil Y Juvenil",
+                "institucion_direccion": "Cll. 22a # 96i-06",
+                "institucion_nit": "901.316.552",
+                "institucion_contactos": "secretaria@injuv.edu.co",
+                "institucion_telefono": "+57 601 2671208"
+            },
+            {
+                "id": 2,
+                "institucion_nombre": "Villermar El carmen",
+                "institucion_direccion": "Cra 96g no 33-45",
+                "institucion_nit": "99.22.55.66",
+                "institucion_contactos": "villermar_el_carmen@hotmail.com",
+                "institucion_telefono": "+57 601 2335566"
+            }
+        ]
+        # Crear ruta asociada a ambas instituciones
+        self.ruta = Ruta.objects.create(
+            ruta_nombre="Ruta 1",
+            ruta_movil=6633,
+            instituciones_ids=[1, 2],
+            activa=True
+        )
 
-        # Configuración inicial para las pruebas de la API
-        self.ruta_data = {
-            'ruta_nombre': 'Ruta 1',
-            'ruta_movil': 12345,
-            'institucion_id': 1,  # Usa el ID simulado
-            'activa': True
-        }
-        # Crear una ruta inicial para probar las funcionalidades de actualización y eliminación
-        self.ruta = Ruta.objects.create(**self.ruta_data)
-
-    @patch('applications.api.serializers.requests.get')  # Simula la solicitud al servicio de Instituciones
+    @patch('applications.api.serializers.requests.get')
     def test_create_ruta(self, mock_get):
-        # Simula que la institución existe en el servicio de Instituciones
+        """Prueba la creación de una ruta."""
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
-            'id': 1,
-            'institucion_nombre': 'Colegio San Jose',
-            'institucion_nit': '901.316.552'
+            "id": 1,
+            "institucion_nombre": "Instituto Infantil Y Juvenil"
         }
+        url = reverse('ruta_app:ruta-list')
+        response = self.client.post(url, {
+            "ruta_nombre": "Ruta 2",
+            "ruta_movil": 6789,
+            "instituciones_ids": [1, 2],
+            "activa": True
+        }, format='json')
 
-        # Verifica que se pueda crear una ruta a través de la API
-        new_ruta_data = {
-            'ruta_nombre': 'Ruta 2',
-            'ruta_movil': 67890,
-            'institucion_id': 1,  # Usa una institución simulada
-            'activa': True
-        }
-        response = self.client.post('/api/rutas/', new_ruta_data, format='json')
-        if response.status_code != status.HTTP_201_CREATED:
-            print("Error en la creación de la ruta:", response.data)  # Imprimir errores si falla la creación
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Ruta.objects.count(), 2)  # ya existe una creada en setUp
+        self.assertEqual(Ruta.objects.count(), 2)
+        self.assertEqual(Ruta.objects.get(ruta_nombre="Ruta 2").ruta_nombre, "Ruta 2")
 
-    @patch('applications.api.serializers.requests.get')  # Simula que la institución no existe
-    def test_create_ruta_institucion_not_found(self, mock_get):
-        # Simula que la institución no existe en el servicio de Instituciones
+    @patch('applications.api.serializers.requests.get')
+    def test_get_ruta(self, mock_get):
+        """Prueba la obtención de una ruta existente."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "id": 1,
+            "institucion_nombre": "Instituto Infantil Y Juvenil"
+        }
+        url = reverse('ruta_app:ruta-detail', args=[self.ruta.id])
+        response = self.client.get(url, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['ruta_nombre'], self.ruta.ruta_nombre)
+        self.assertEqual(len(response.data['instituciones']), 2)
+
+    @patch('applications.api.serializers.requests.get')
+    def test_create_ruta_invalid_institucion(self, mock_get):
+        """Prueba que no se pueda crear una ruta con una institución inválida."""
         mock_get.return_value.status_code = 404
 
-        # Intenta crear una ruta con una institución que no existe
-        new_ruta_data = {
-            'ruta_nombre': 'Ruta 3',
-            'ruta_movil': 56789,
-            'institucion_id': 999,  # ID que no existe
-            'activa': True
+        invalid_ruta_data = {
+            "ruta_nombre": "Ruta Invalida",
+            "ruta_movil": 9876,
+            "instituciones_ids": [999],  # ID de institución no existente
+            "activa": True
         }
-        response = self.client.post('/api/rutas/', new_ruta_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('institucion_id', response.data)
-        self.assertEqual(Ruta.objects.count(), 1)  # No se debe crear la nueva ruta
 
-    def test_get_ruta_list(self):
-        # Verifica que la API pueda listar las rutas existentes
-        response = self.client.get('/api/rutas/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        url = reverse('ruta_app:ruta-list')
+        response = self.client.post(url, invalid_ruta_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('instituciones_ids', response.data)
 
     @patch('applications.api.serializers.requests.get')
     def test_update_ruta(self, mock_get):
-        # Simula la solicitud de la institución existente
+        """Prueba la actualización de una ruta existente."""
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
-            'id': 1,
-            'institucion_nombre': 'Colegio San Jose',
-            'institucion_nit': '901.316.552'
+            "id": 1,
+            "institucion_nombre": "Instituto Infantil Y Juvenil"
         }
+        updated_ruta_data = {
+            "ruta_nombre": "Ruta 1 Actualizada",
+            "ruta_movil": 6634,
+            "instituciones_ids": [1],
+            "activa": False
+        }
+        url = reverse('ruta_app:ruta-detail', args=[self.ruta.id])
+        response = self.client.put(url, updated_ruta_data, format='json')
 
-        # Verifica que se pueda actualizar una ruta a través de la API
-        updated_data = {'ruta_nombre': 'Ruta Actualizada'}
-        response = self.client.patch(f'/api/rutas/{self.ruta.id}/', updated_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['ruta_nombre'], 'Ruta Actualizada')
+        self.ruta.refresh_from_db()
+        self.assertEqual(self.ruta.ruta_nombre, updated_ruta_data['ruta_nombre'])
+        self.assertEqual(self.ruta.ruta_movil, updated_ruta_data['ruta_movil'])
+        self.assertFalse(self.ruta.activa)
+        self.assertEqual(len(self.ruta.instituciones_ids), 1)
 
-    def test_delete_ruta(self):
-        # Verifica que se pueda eliminar una ruta a través de la API
-        response = self.client.delete(f'/api/rutas/{self.ruta.id}/')
+    @patch('applications.api.serializers.requests.get')
+    def test_delete_ruta(self, mock_get):
+        """Prueba la eliminación de una ruta existente."""
+        mock_get.return_value.status_code = 200
+        url = reverse('ruta_app:ruta-detail', args=[self.ruta.id])
+        response = self.client.delete(url, format='json')
+
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Ruta.objects.count(), 0)
-
-# Pruebas para el Serializador RutaSerializer
-class RutaSerializerTest(TestCase):
-
-    @patch('applications.api.serializers.requests.get')  # Simular la solicitud al servicio de Instituciones
-    def setUp(self, mock_get):
-        # Simula que la institución existe
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            'id': 1,
-            'institucion_nombre': 'Colegio Ejemplo',
-            'institucion_nit': '901.999.999'
-        }
-
-        # Configuración inicial para las pruebas del serializador
-        self.ruta_data = {
-            'ruta_nombre': 'Ruta 1',
-            'ruta_movil': 12345,
-            'institucion_id': 1,
-            'activa': True
-        }
-
-    def test_valid_data(self):
-        # Verifica que el serializador sea válido con datos correctos
-        serializer = RutaSerializer(data=self.ruta_data)
-        if not serializer.is_valid():
-            print(serializer.errors)  # Imprimir errores si no es válido
-        self.assertTrue(serializer.is_valid())
-
-    def test_invalid_data(self):
-        # Verifica que el serializador no sea válido si los datos son incorrectos
-        invalid_data = self.ruta_data.copy()
-        invalid_data['ruta_movil'] = 'not-a-number'  # Valor inválido para el número de móvil
-        serializer = RutaSerializer(data=invalid_data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('ruta_movil', serializer.errors)

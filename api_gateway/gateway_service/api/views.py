@@ -9,6 +9,8 @@ class InstitutionWithRoutesView(APIView):
         try:
             # Solicitar la información de la institución
             institucion_response = requests.get(f'http://instituciones:8001/api/instituciones/{institucion_id}/')
+            if institucion_response.status_code == 404:
+                return Response({"error": "La institución con el ID proporcionado no existe."}, status=status.HTTP_404_NOT_FOUND)
             institucion_response.raise_for_status()
 
             institucion_data = institucion_response.json()
@@ -39,7 +41,16 @@ class InstitutionWithRoutesView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Verificar si hay rutas asociadas a la institución
-        rutas_asociadas = [ruta for ruta in rutas_data if institucion_id in ruta.get('instituciones_ids', [])]
+        rutas_asociadas = [
+            {
+                "id": ruta.get("id"),
+                "instituciones": ruta.get("instituciones"),
+                "ruta_nombre": ruta.get("ruta_nombre"),
+                "ruta_movil": ruta.get("ruta_movil"),
+                "activa": ruta.get("activa")
+            }
+            for ruta in rutas_data if institucion_id in ruta.get('instituciones_ids', [])
+        ]
         institucion_data['rutas'] = rutas_asociadas
 
         # Validar si no existen rutas asociadas
@@ -47,6 +58,7 @@ class InstitutionWithRoutesView(APIView):
             institucion_data['mensaje'] = "No hay rutas asociadas a esta institución."
 
         return Response(institucion_data, status=status.HTTP_200_OK)
+
 
 # Nueva clase para obtener la información de los estudiantes asociados a una ruta y institucion especifica 
 class EstudiantesPorInstitucionYRutaView(APIView):
@@ -112,3 +124,4 @@ class EstudiantesPorInstitucionYRutaView(APIView):
             return Response({'error': 'Service request failed', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception as e:
             return Response({'error': 'An unexpected error occurred', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        

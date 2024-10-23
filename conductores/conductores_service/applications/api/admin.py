@@ -6,12 +6,12 @@ from .models import Conductor
 #admin.site.register(Institucion)
 
 @admin.register(Conductor)
-class InstitucionAdmin(admin.ModelAdmin):
+class ConductorAdmin(admin.ModelAdmin):
     list_display = (
-        'institucion_nombre',
-        'institucion_direccion',
-        'institucion_nit',
-        'institucion_contactos',
-        'institucion_telefono',
+        'nombre',
+        'apellido',
+        'edad',
+        'telefono',
+        'licencia_activa',
 )
     

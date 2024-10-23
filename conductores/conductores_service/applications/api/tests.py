@@ -1,4 +1,3 @@
-# Create your tests here.
 # tests.py para el servicio de conductores
 from django.test import TestCase
 from rest_framework import status
@@ -17,7 +16,6 @@ class ConductorModelTest(TestCase):
             'edad': 35,
             'telefono': '1234567890',
             'fecha_exp': date.today() - timedelta(days=365),
-            'fecha_expiracion': date.today() + timedelta(days=365),
             'licencia_activa': True
         }
 
@@ -42,7 +40,6 @@ class ConductorAPITestCase(APITestCase):
             'edad': 35,
             'telefono': '1234567890',
             'fecha_exp': date.today() - timedelta(days=365),
-            'fecha_expiracion': date.today() + timedelta(days=365),
             'licencia_activa': True
         }
         # Crear un conductor inicial para probar las funcionalidades de actualización y eliminación
@@ -56,7 +53,6 @@ class ConductorAPITestCase(APITestCase):
             'edad': 40,
             'telefono': '0987654321',
             'fecha_exp': date.today() - timedelta(days=400),
-            'fecha_expiracion': date.today() + timedelta(days=200),
             'licencia_activa': True
         }
         response = self.client.post('/api/conductores/', new_conductor_data, format='json')
@@ -94,7 +90,6 @@ class ConductorSerializerTest(TestCase):
             'edad': 35,
             'telefono': '1234567890',
             'fecha_exp': date.today() - timedelta(days=365),
-            'fecha_expiracion': date.today() + timedelta(days=365),
             'licencia_activa': True
         }
 

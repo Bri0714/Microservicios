@@ -11,7 +11,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'conductores']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'conductores',
+        'NAME': 'conductor',
         'USER': 'brian',
         'PASSWORD': 'parada2023',
         'HOST': 'db_conductor',

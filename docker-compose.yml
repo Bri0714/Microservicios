@@ -76,6 +76,21 @@ services:
     volumes:
       - ./estudiantes:/app  # Volume asociado al WORKDIR del Dockerfile
 
+  conductores:
+    build:
+      context: ./conductores
+      dockerfile: Dockerfile
+    container_name: conductores
+    ports:
+      - "8005:8005"
+    networks:
+      - backend
+    depends_on:
+      - db_autenticacion
+      - db_conductor
+    volumes:
+      - ./conductores:/app  # Volume asociado al WORKDIR del Dockerfile
+
   db_institucion:
     image: postgres:13
     volumes:
@@ -141,6 +156,19 @@ services:
       - "5436:5432"
     networks:
       - backend
+
+  db_conductor:
+    image: postgres:13
+    volumes:
+      - postgres_data_conductor:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=conductor
+      - POSTGRES_USER=brian
+      - POSTGRES_PASSWORD=parada2023
+    ports:
+      - "5437:5432"
+    networks:
+      - backend
     
 networks:
   backend:
@@ -152,3 +180,4 @@ volumes:
   postgres_data_gateway: 
   postgres_data_autenticacion:
   postgres_data_estudiante:
+  postgres_data_conductor:

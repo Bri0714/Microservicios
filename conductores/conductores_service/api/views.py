@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from rest_framework import viewsets
+from .models import Conductor
+from .serializers import Conductorserializer
 
-# Create your views here.
+class InstitucionViewSet(viewsets.ModelViewSet):
+    queryset = Conductor.objects.all()
+    serializer_class = Conductorserializer

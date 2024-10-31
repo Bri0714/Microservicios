@@ -4,9 +4,11 @@ charset-normalizer==3.4.0
 Django==4.2
 django-cors-headers==3.13.0
 djangorestframework==3.14.0
+drf-writable-nested==0.7.0
 idna==3.10
+Pillow==10.0.1
 psycopg2-binary==2.9.10
-PyJWT==2.9.0
+python-dotenv==1.0.1
 pytz==2024.2
 requests==2.31.0
 sqlparse==0.5.1

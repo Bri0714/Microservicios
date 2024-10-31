@@ -4,6 +4,7 @@ django-cors-headers==3.13.0
 djangorestframework==3.14.0
 pillow==10.0.1
 psycopg2-binary==2.9.10
+PyJWT==2.9.0
 python-dotenv==1.0.1
 pytz==2024.2
 sqlparse==0.5.1

@@ -1,51 +1,79 @@
-from django.contrib.auth import get_user_model, login, logout
-from rest_framework.authentication import SessionAuthentication
-from rest_framework.views import APIView
+from django.contrib.auth import get_user_model, authenticate
+from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer
-from rest_framework import permissions, status
-from .validations import custom_validation, validate_email, validate_password
+from rest_framework.views import APIView
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.conf import settings
+import jwt
+from datetime import datetime, timedelta
 
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
 
-class UserRegister(APIView):
-	permission_classes = (permissions.AllowAny,)
-	def post(self, request):
-		clean_data = custom_validation(request.data)
-		serializer = UserRegisterSerializer(data=clean_data)
-		if serializer.is_valid(raise_exception=True):
-			user = serializer.create(clean_data)
-			if user:
-				return Response(serializer.data, status=status.HTTP_201_CREATED)
-		return Response(status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        serializer = UserRegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            # Generar token JWT
+            payload = {
+                'user_id': user.user_id,
+                'exp': datetime.utcnow() + timedelta(days=1),
+                'iat': datetime.utcnow(),
+            }
+            token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+            return Response({'message': 'Usuario creado exitosamente.', 'token': token}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class LoginView(APIView):
+    permission_classes = [AllowAny]
 
-class UserLogin(APIView):
-	permission_classes = (permissions.AllowAny,)
-	authentication_classes = (SessionAuthentication,)
-	##
-	def post(self, request):
-		data = request.data
-		assert validate_email(data)
-		assert validate_password(data)
-		serializer = UserLoginSerializer(data=data)
-		if serializer.is_valid(raise_exception=True):
-			user = serializer.check_user(data)
-			login(request, user)
-			return Response(serializer.data, status=status.HTTP_200_OK)
+    def post(self, request):
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = authenticate(username=serializer.validated_data['email'], password=serializer.validated_data['password'])
+            if user:
+                # Generar token JWT
+                payload = {
+                    'user_id': user.user_id,
+                    'exp': datetime.utcnow() + timedelta(days=1),
+                    'iat': datetime.utcnow(),
+                }
+                token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+                return Response({'token': token}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Credenciales incorrectas.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
 
-class UserLogout(APIView):
-	permission_classes = (permissions.AllowAny,)
-	authentication_classes = ()
-	def post(self, request):
-		logout(request)
-		return Response(status=status.HTTP_200_OK)
+    def post(self, request):
+        # No es necesario manejar tokens aquí, ya que con JWT no almacenamos tokens en el servidor
+        return Response({'message': 'Sesión cerrada exitosamente.'}, status=status.HTTP_200_OK)
 
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
 
-class UserView(APIView):
-	permission_classes = (permissions.IsAuthenticated,)
-	authentication_classes = (SessionAuthentication,)
-	##
-	def get(self, request):
-		serializer = UserSerializer(request.user)
-		return Response({'user': serializer.data}, status=status.HTTP_200_OK)
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response({'user': serializer.data}, status=status.HTTP_200_OK)
+
+class UpdateProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        serializer = UserSerializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Perfil actualizado exitosamente.',
+                'user': serializer.data
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,13 +1,3 @@
-#from rest_framework import viewsets
-#from .models import Institucion
-#from .serializers import InstitucionSerializer
-#
-#class InstitucionViewSet(viewsets.ModelViewSet):
-#    queryset = Institucion.objects.all()
-#    serializer_class = InstitucionSerializer
-
-# instituciones/views.py
-
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import Institucion
@@ -29,7 +19,7 @@ class InstitucionViewSet(viewsets.ModelViewSet):
         print("Usuario autenticado:", user)
         print("ID del usuario:", user.id)
         return Institucion.objects.filter(user_id=user.id)
-    
+
 
     def perform_create(self, serializer):
         serializer.save(user_id=self.request.user.id)

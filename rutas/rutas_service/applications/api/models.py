@@ -6,6 +6,9 @@ class Ruta(models.Model):
     ruta_movil = models.IntegerField('Numero Movil', unique=True)
     instituciones_ids = models.JSONField('IDs de Instituciones Asociadas', default=list)  # Relación a múltiples instituciones
     activa = models.BooleanField('Estado', default=True)
+    
+    # Nuevo campo para almacenar el ID del usuario
+    user_id = models.IntegerField()
 
     def __str__(self):
         return f"{self.ruta_nombre} - {self.ruta_movil}"

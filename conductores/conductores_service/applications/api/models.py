@@ -11,6 +11,9 @@ class Conductor(models.Model):
     fecha_exp = models.DateField('Fecha de Expedición de Licencia')
     fecha_expiracion = models.DateField('Fecha de Expiración de Licencia', blank=True, null=True)
     licencia_activa = models.BooleanField('Licencia Activa', default=True)
+    vehiculo_id = models.IntegerField('ID del Vehículo', unique=True)  # Relación con Vehículo (relación uno a uno)
+    
+    user_id = models.IntegerField()  # Campo para almacenar el ID del usuario
 
     def save(self, *args, **kwargs):
         # Asignar la fecha de expiración automáticamente según la edad del conductor

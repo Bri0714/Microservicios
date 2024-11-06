@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b(3prf@=j-3*azdp5om7u++k90s%!my8=h)*@pvu+d1q!teedu'
+SECRET_KEY = 'django-insecure-8v5xe-sq-ea)u8!ouih%c++6fu+w=2pz-a^vw0izbiwap*@xm('
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -79,6 +79,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'gateway_service.wsgi.application'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'api.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
 
 
 # Database

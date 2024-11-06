@@ -91,6 +91,21 @@ services:
     volumes:
       - ./conductores:/app  # Volume asociado al WORKDIR del Dockerfile
 
+  vehiculos:
+      build:
+        context: ./vehiculos
+        dockerfile: Dockerfile
+      container_name: vehiculos
+      ports:
+        - "8006:8006"
+      networks:
+        - backend
+      depends_on:
+        - db_autenticacion
+        - db_vehiculo
+      volumes:
+        - ./vehiculos:/app  # Volume asociado al WORKDIR del Dockerfile
+
   db_institucion:
     image: postgres:13
     volumes:
@@ -169,6 +184,19 @@ services:
       - "5437:5432"
     networks:
       - backend
+
+  db_vehiculo:
+      image: postgres:13
+      volumes:
+        - postgres_data_vehiculo:/var/lib/postgresql/data
+      environment:
+        - POSTGRES_DB=vehiculo
+        - POSTGRES_USER=brian
+        - POSTGRES_PASSWORD=parada2023
+      ports:
+        - "5438:5432"
+      networks:
+        - backend
     
 networks:
   backend:
@@ -181,3 +209,4 @@ volumes:
   postgres_data_autenticacion:
   postgres_data_estudiante:
   postgres_data_conductor:
+  postgres_data_vehiculo:

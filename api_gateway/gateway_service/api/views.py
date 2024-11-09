@@ -175,9 +175,7 @@ class InstitutionWithRoutesView(APIView):
 
         return Response(institucion_data, status=status.HTTP_200_OK)
 
-
-
-# Nueva clase para obtener la información de los estudiantes asociados a una ruta y institucion especifica 
+# Nueva clase para obtener la información de los estudiantes asociados a una ruta y institución específica
 class EstudiantesPorInstitucionYRutaView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -212,23 +210,42 @@ class EstudiantesPorInstitucionYRutaView(APIView):
                 headers={"Authorization": request.headers.get("Authorization")}
             )
             if estudiantes_response.status_code != 200:
-                return Response({'error': 'Error fetching estudiantes', 'details': estudiantes_response.text}, status=estudiantes_response.status_code)
+                return Response({'error': 'Error al obtener estudiantes', 'details': estudiantes_response.text}, status=estudiantes_response.status_code)
 
             estudiantes = estudiantes_response.json()
 
             # Filtrar solo los estudiantes que pertenecen a la institución y ruta especificada
             estudiantes_filtrados = [est for est in estudiantes if est['colegio_id'] == institucion_id and est['ruta_id'] == ruta_id]
 
+            # Obtener el vehículo asociado a la ruta
+            vehiculo_response = requests.get(
+                f'http://vehiculos:8006/api/vehiculos/?ruta_id={ruta_id}',
+                headers={"Authorization": request.headers.get("Authorization")}
+            )
+            if vehiculo_response.status_code != 200:
+                return Response({'error': 'Error al obtener el vehículo asociado a la ruta', 'details': vehiculo_response.text}, status=vehiculo_response.status_code)
+
+            vehiculos = vehiculo_response.json()
+            # Filtrar el vehículo que corresponde a la ruta_id
+            vehiculos_ruta = [v for v in vehiculos if v.get('ruta_id') == ruta_id]
+            if not vehiculos_ruta:
+                return Response({'error': f'No se encontró un vehículo asociado a la ruta con ID {ruta_id}.'}, status=status.HTTP_404_NOT_FOUND)
+
+            vehiculo_data = vehiculos_ruta[0]
+
             # Modificar la respuesta para que sea más fácil de consumir
             response_data = {
                 "institucion": {
                     "id": institucion_id,
-                    "nombre": institucion_data.get("institucion_nombre")
+                    "nombre": institucion_data.get("institucion_nombre"),
+                    "nit": institucion_data.get("institucion_nit"),
+                    "logo": institucion_data.get("institucion_logo")
                 },
                 "ruta": {
                     "id": ruta_id,
                     "nombre": ruta_data.get("ruta_nombre")
                 },
+                "vehiculo": vehiculo_data,
                 "estudiantes": []
             }
 
@@ -250,9 +267,9 @@ class EstudiantesPorInstitucionYRutaView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
 
         except requests.exceptions.RequestException as e:
-            return Response({'error': 'Service request failed', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({'error': 'Error en la solicitud a un servicio externo', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception as e:
-            return Response({'error': 'An unexpected error occurred', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'Ocurrió un error inesperado', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Nueva clase para obtener la información completa de una ruta, vehículo y conductor

@@ -13,6 +13,8 @@ class Acudiente(models.Model):
     ]
     acudiente_parentesco = models.CharField(max_length=50, choices=PARENTESCO_CHOICES, null=False, blank=False)
     acudiente_telefono = models.CharField(max_length=40, null=False, blank=False)
+    
+    user_id = models.IntegerField(null=False, blank=False)  # Relación con el usuario (ID externo)
 
     def __str__(self):
         return f"{self.acudiente_nombre} {self.acudiente_apellido}"
@@ -28,7 +30,11 @@ class Estudiante(models.Model):
     estudiante_apellido = models.CharField(max_length=100, null=False, blank=False)
     estudiante_edad = models.PositiveIntegerField(null=False, blank=False)
     estudiante_curso = models.CharField(max_length=50, null=False, blank=False)
-    estudiante_direccion = models.CharField(max_length=255, null=False, blank=False)  
+    estudiante_direccion = models.CharField(max_length=255, null=False, blank=False)
+    estudiante_fecha_ingreso_ruta = models.DateField(null=False, blank=False)
+    estudiante_estado = models.BooleanField(default=True)
+    
+    user_id = models.IntegerField(null=False, blank=False)  # Relación con el usuario (ID externo)
 
     def __str__(self):
         return f"{self.estudiante_nombre} {self.estudiante_apellido}"

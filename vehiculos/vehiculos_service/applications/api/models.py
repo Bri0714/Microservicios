@@ -15,7 +15,7 @@ class Vehiculo(models.Model):
 class Monitora(models.Model):
     nombre_completo = models.CharField('Nombre Completo', max_length=100)
     edad = models.PositiveIntegerField('Edad')
-    telefono = models.CharField('Teléfono', max_length=15, unique=True)
+    telefono = models.CharField('Teléfono', max_length=10 , unique=True)
     vehiculo = models.OneToOneField(Vehiculo, on_delete=models.CASCADE, related_name='monitora')  # Relación con Vehículo (relación uno a uno)
     user_id = models.IntegerField()  # Campo para almacenar el ID del usuario
 

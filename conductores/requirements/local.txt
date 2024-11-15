@@ -15,3 +15,6 @@ requests==2.31.0
 sqlparse==0.5.1
 tzdata==2024.2
 urllib3==2.2.3
+celery==5.2.3
+django-celery-beat==2.5.0
+redis==4.1.0

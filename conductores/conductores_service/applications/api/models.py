@@ -20,7 +20,7 @@ class Conductor(models.Model):
         if not self.fecha_expiracion:
             if self.edad < 60:
                 self.fecha_expiracion = self.fecha_exp + timedelta(days=3*365)
-            elif self.edad > 80:
+            elif self.edad > 60:
                 self.fecha_expiracion = self.fecha_exp + timedelta(days=1*365)
         
         # Verificar si la licencia ha expirado y actualizar el campo licencia_activa

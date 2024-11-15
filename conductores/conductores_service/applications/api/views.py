@@ -20,8 +20,12 @@ class ConductorViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Conductor.objects.filter(user_id=user.id)
-
+        queryset = Conductor.objects.filter(user_id=user.id)
+        vehiculo_id = self.request.query_params.get('vehiculo_id', None)
+        if vehiculo_id is not None:
+            queryset = queryset.filter(vehiculo_id=vehiculo_id)
+        return queryset
+    
     def perform_create(self, serializer):
         serializer.save(user_id=self.request.user.id)
 

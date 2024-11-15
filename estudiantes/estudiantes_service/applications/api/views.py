@@ -37,7 +37,21 @@ class EstudianteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Estudiante.objects.filter(user_id=user.id)
+        queryset = Estudiante.objects.filter(user_id=user.id)
+        
+        ruta_id = self.request.query_params.get('ruta_id', None)
+        
+        if ruta_id is not None:
+            queryset = queryset.filter(ruta_id=ruta_id)
+            
+        colegio_id = self.request.query_params.get('colegio_id', None)
+        
+        if colegio_id is not None:
+            queryset = queryset.filter(colegio_id=colegio_id)
+            
+        return queryset
+
 
     def perform_create(self, serializer):
         serializer.save(user_id=self.request.user.id)
+        

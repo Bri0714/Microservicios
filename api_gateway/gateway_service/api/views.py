@@ -272,7 +272,7 @@ class EstudiantesPorInstitucionYRutaView(APIView):
             return Response({'error': 'Ocurrió un error inesperado', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# Nueva clase para obtener la información completa de una ruta, vehículo y conductor
+# Nueva clase para obtener la información completa de una ruta, vehículo, conductor y monitora
 class RutaVehiculoConductorView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -295,11 +295,13 @@ class RutaVehiculoConductorView(APIView):
                 "ruta": {
                     "id": ruta_id,
                     "nombre": ruta_data.get("ruta_nombre"),
-                    "codigo": ruta_data.get("ruta_movil")
+                    "codigo": ruta_data.get("ruta_movil"),
+                    "estado": ruta_data.get("activa")
                 },
                 "instituciones": "La ruta no tiene instituciones asociadas",
                 "vehiculo": "La ruta no tiene vehículo asociado",
-                "conductor": "El vehículo no tiene conductor asociado"
+                "conductor": "El vehículo no tiene conductor asociado",
+                "monitora": "El vehículo no tiene monitora asociada"
             }
 
             # Obtener instituciones asociadas a la ruta
@@ -329,7 +331,8 @@ class RutaVehiculoConductorView(APIView):
                         response_data["vehiculo"] = {
                             "placa": vehiculo_data.get("vehiculo_placa"),
                             "marca": vehiculo_data.get("vehiculo_marca"),
-                            "modelo": vehiculo_data.get("vehiculo_modelo")
+                            "modelo": vehiculo_data.get("vehiculo_modelo"),
+                            "capacidad" : vehiculo_data.get("vehiculo_capacidad")
                         }
 
                         # Validar existencia del conductor asociado al vehículo
@@ -345,8 +348,20 @@ class RutaVehiculoConductorView(APIView):
                                     response_data["conductor"] = {
                                         "nombre": f"{conductor_data.get('nombre')} {conductor_data.get('apellido')}",
                                         "foto": conductor_data.get("foto"),
-                                        "telefono": conductor_data.get("telefono")
+                                        "telefono": conductor_data.get("telefono"),
+                                        "fecha_expedicion": conductor_data.get("fecha_exp"),
+                                        "estado": conductor_data.get("licencia_activa")
                                     }
+
+                        # Validar existencia de la monitora asociada al vehículo
+                        monitora_data = vehiculo_data.get("monitora")
+                        if monitora_data:
+                            response_data["monitora"] = {
+                                "nombre_completo": monitora_data.get("nombre_completo"),
+                                "edad": monitora_data.get("edad"),
+                                "telefono": monitora_data.get("telefono")
+                            }
+
                         break  # Si encontramos el vehículo asociado, no es necesario seguir iterando
 
             return Response(response_data, status=status.HTTP_200_OK)
@@ -355,3 +370,4 @@ class RutaVehiculoConductorView(APIView):
             return Response({'error': 'Service request failed', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception as e:
             return Response({'error': 'An unexpected error occurred', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    

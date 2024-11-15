@@ -52,10 +52,21 @@ LOCAL_APPS = (
 THIRD_PARTY_APPS = (
     'rest_framework',
     'corsheaders',
+    'django_celery_beat',
 )
 
 # DEFINICION DE APLICACIONES EN PYTHON 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
+
+# Celery Configuration Options
+CELERY_BROKER_URL = 'redis://redis:6379/0'  # URL del broker (Redis)
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'  # Backend para almacenar resultados
+CELERY_BEAT_SCHEDULE = {
+    'update_licencia_activa_daily': {
+        'task': 'applications.api.tasks.update_licencia_activa',
+        'schedule': 900.0,  # Ejecutar cada 5 minutos 
+    },
+}
 
 
 MIDDLEWARE = [

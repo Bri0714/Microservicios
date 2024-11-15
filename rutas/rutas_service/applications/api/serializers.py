@@ -89,5 +89,4 @@ class RutaSerializer(serializers.ModelSerializer):
         instance.instituciones_ids = instituciones_ids
         instance.save()
         return instance
-
-
+    

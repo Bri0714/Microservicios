@@ -27,6 +27,7 @@ services:
     depends_on:
       - instituciones
       - db_ruta
+      - vehiculos
     volumes:
       - ./rutas:/app  # Volume asociado al WORKDIR del Dockerfile
 
@@ -88,8 +89,40 @@ services:
     depends_on:
       - db_autenticacion
       - db_conductor
+      - redis
     volumes:
       - ./conductores:/app  # Volume asociado al WORKDIR del Dockerfile
+
+  conductores_worker:
+    build:
+      context: ./conductores
+      dockerfile: Dockerfile
+    container_name: conductores_worker
+    command: celery -A conductores_service worker -l info
+    networks:
+      - backend
+    depends_on:
+      - conductores
+      - redis
+    volumes:
+      - ./conductores:/app  # Volume asociado al WORKDIR del Dockerfile
+    working_dir: /app/conductores_service
+  
+  conductores_beat:
+    build:
+      context: ./conductores
+      dockerfile: Dockerfile
+    container_name: conductores_beat
+    command: celery -A conductores_service beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    networks:
+      - backend
+    depends_on:
+      - conductores
+      - redis
+    volumes:
+      - ./conductores:/app  # Volume asociado al WORKDIR del Dockerfile
+    working_dir: /app/conductores_service
+  
 
   vehiculos:
       build:
@@ -105,6 +138,14 @@ services:
         - db_vehiculo
       volumes:
         - ./vehiculos:/app  # Volume asociado al WORKDIR del Dockerfile
+
+  redis:
+    image: redis:6
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
 
   db_institucion:
     image: postgres:13
@@ -210,3 +251,4 @@ volumes:
   postgres_data_estudiante:
   postgres_data_conductor:
   postgres_data_vehiculo:
+  postgres_data_redis:

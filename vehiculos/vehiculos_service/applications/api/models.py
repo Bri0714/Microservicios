@@ -1,12 +1,12 @@
 from django.db import models
 
 class Vehiculo(models.Model):
-    vehiculo_placa = models.CharField('Placa del Vehículo', max_length=10, unique=True)
+    vehiculo_placa = models.CharField('Placa del Vehículo', max_length=10)
     vehiculo_marca = models.CharField('Marca del Vehículo', max_length=50)
     vehiculo_modelo = models.IntegerField('Modelo del Vehículo')
     vehiculo_imagen = models.ImageField(upload_to='vehiculos/', null=True, blank=True)
     vehiculo_capacidad = models.PositiveIntegerField('Capacidad del Vehículo')
-    ruta_id = models.IntegerField('ID de la Ruta', unique=True)  # Relación con Ruta (relación uno a uno)
+    ruta_id = models.IntegerField('ID de la Ruta')  # Relación con Ruta (relación uno a uno)
     user_id = models.IntegerField()  # Campo para almacenar el ID del usuario
 
     def __str__(self):

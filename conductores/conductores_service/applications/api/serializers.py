@@ -35,6 +35,51 @@ class ConductorSerializer(serializers.ModelSerializer):
                 vehiculo_data = response.json()
                 return vehiculo_data.get('vehiculo_placa', 'Información no disponible')
         return 'Información no disponible'
+    
+    def validate(self, attrs):
+        user_id = self.context['request'].user.id
+        telefono = attrs.get('telefono')
+        vehiculo_id = attrs.get('vehiculo_id')
+
+        conductor_id = self.instance.id if self.instance else None
+
+        # Verificar unicidad de telefono por usuario
+        if Conductor.objects.filter(
+            user_id=user_id,
+            telefono=telefono
+        ).exclude(id=conductor_id).exists():
+            raise serializers.ValidationError({
+                'telefono': 'Ya existe un conductor con este teléfono para este usuario.'
+            })
+
+        # Verificar unicidad de vehiculo_id por usuario
+        if Conductor.objects.filter(
+            user_id=user_id,
+            vehiculo_id=vehiculo_id
+        ).exclude(id=conductor_id).exists():
+            raise serializers.ValidationError({
+                'vehiculo_id': 'Ya existe un conductor asociado a este vehículo para este usuario.'
+            })
+
+        # Validar que el vehículo existe en el microservicio
+        headers = self._get_auth_headers()
+        response = requests.get(f'http://vehiculos:8006/api/vehiculos/{vehiculo_id}/', headers=headers)
+        if response.status_code != 200:
+            raise serializers.ValidationError({
+                'vehiculo_id': f'El vehículo con ID {vehiculo_id} no existe o no se pudo verificar.'
+            })
+
+        # Calcular automáticamente la fecha de expiración según la edad del conductor y la fecha de expedición
+        edad = attrs.get('edad')
+        fecha_exp = attrs.get('fecha_exp')
+        if edad and fecha_exp:
+            if edad < 60:
+                attrs['fecha_expiracion'] = fecha_exp + timedelta(days=3*365)
+            else:
+                attrs['fecha_expiracion'] = fecha_exp + timedelta(days=1*365)
+
+        return attrs
+
 
     def validate_edad(self, value):
         # Validar que la edad sea mayor a 18 años
@@ -67,6 +112,7 @@ class ConductorSerializer(serializers.ModelSerializer):
         """
         Se asegura de que el vehículo existe antes de crear el conductor.
         """
+        validated_data['user_id'] = self.context['request'].user.id
         vehiculo_id = validated_data.get('vehiculo_id')
         headers = self._get_auth_headers()
         response = requests.get(f'http://vehiculos:8006/api/vehiculos/{vehiculo_id}/', headers=headers)
@@ -79,6 +125,7 @@ class ConductorSerializer(serializers.ModelSerializer):
         """
         Se asegura de que el vehículo existe antes de actualizar el conductor.
         """
+        validated_data['user_id'] = self.context['request'].user.id
         vehiculo_id = validated_data.get('vehiculo_id', instance.vehiculo_id)
         headers = self._get_auth_headers()
         response = requests.get(f'http://vehiculos:8006/api/vehiculos/{vehiculo_id}/', headers=headers)

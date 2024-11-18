@@ -14,7 +14,7 @@ DATABASES = {
         'NAME': 'pagoYmultas',
         'USER': 'brian',
         'PASSWORD': 'parada2023',
-        'HOST': 'db_institucion',
+        'HOST': 'db_pago',
         'PORT': '5432',
     }
 }

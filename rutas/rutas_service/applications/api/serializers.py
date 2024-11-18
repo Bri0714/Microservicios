@@ -19,7 +19,36 @@ class RutaSerializer(serializers.ModelSerializer):
         token = request.headers.get('Authorization') if request else None
         if not token:
             raise ValidationError('No se pudo obtener el token de autorización.')
+        
         return {'Authorization': token}
+
+    def validate(self, attrs):
+        user_id = self.context['request'].user.id  # Obtener el ID del usuario actual
+        ruta_nombre = attrs.get('ruta_nombre')
+        ruta_movil = attrs.get('ruta_movil')
+
+        # Obtener el ID de la ruta actual si existe (en caso de actualización)
+        ruta_id = self.instance.id if self.instance else None
+
+        # Verificar unicidad de ruta_nombre por usuario
+        if Ruta.objects.filter(
+            user_id=user_id,
+            ruta_nombre=ruta_nombre
+        ).exclude(id=ruta_id).exists():
+            raise serializers.ValidationError({
+                'ruta_nombre': 'Ya existe una ruta con este nombre para este usuario.'
+            })
+
+        # Verificar unicidad de ruta_movil por usuario
+        if Ruta.objects.filter(
+            user_id=user_id,
+            ruta_movil=ruta_movil
+        ).exclude(id=ruta_id).exists():
+            raise serializers.ValidationError({
+                'ruta_movil': 'Ya existe una ruta con este número móvil para este usuario.'
+            })
+
+        return attrs
 
     def validate_instituciones_ids(self, value):
         """
@@ -60,7 +89,11 @@ class RutaSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Se asegura de que las instituciones existen antes de crear la ruta.
+        
         """
+        user_id = self.context['request'].user.id
+        validated_data['user_id'] = user_id
+        
         instituciones_ids = validated_data.get('instituciones_ids', [])
         headers = self._get_auth_headers()#
         for institucion_id in instituciones_ids:

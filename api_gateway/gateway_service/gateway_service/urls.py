@@ -28,4 +28,5 @@ urlpatterns = [
     
     # Ruta para obtener la información completa de la ruta, vehículo y conductor
     path('api/rutas/<int:ruta_id>/', RutaVehiculoConductorView.as_view()),
+    
 ]

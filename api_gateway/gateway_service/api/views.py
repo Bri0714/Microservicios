@@ -332,7 +332,8 @@ class RutaVehiculoConductorView(APIView):
                             "placa": vehiculo_data.get("vehiculo_placa"),
                             "marca": vehiculo_data.get("vehiculo_marca"),
                             "modelo": vehiculo_data.get("vehiculo_modelo"),
-                            "capacidad" : vehiculo_data.get("vehiculo_capacidad")
+                            "capacidad" : vehiculo_data.get("vehiculo_capacidad"),
+                            "imagen": vehiculo_data.get("vehiculo_imagen")
                         }
 
                         # Validar existencia del conductor asociado al vehículo
@@ -348,6 +349,7 @@ class RutaVehiculoConductorView(APIView):
                                     response_data["conductor"] = {
                                         "nombre": f"{conductor_data.get('nombre')} {conductor_data.get('apellido')}",
                                         "foto": conductor_data.get("foto"),
+                                        "edad": conductor_data.get("edad"),
                                         "telefono": conductor_data.get("telefono"),
                                         "fecha_expedicion": conductor_data.get("fecha_exp"),
                                         "estado": conductor_data.get("licencia_activa")

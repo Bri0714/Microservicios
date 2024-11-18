@@ -5,6 +5,25 @@ from drf_writable_nested import WritableNestedModelSerializer
 from .models import Estudiante, Acudiente
 import requests
 from rest_framework.serializers import ValidationError
+from decimal import Decimal, InvalidOperation
+
+class PagoRutaField(serializers.Field):
+    def to_internal_value(self, data):
+        # Remover puntos y convertir a decimal
+        try:
+            # Remover espacios en blanco
+            data = data.strip()
+            # Remover puntos de separadores de miles
+            data = data.replace('.', '')
+            # Convertir coma decimal a punto decimal si es necesario
+            data = data.replace(',', '.')
+            # Convertir a Decimal
+            value = Decimal(data)
+            if value <= 0:
+                raise serializers.ValidationError('El monto del pago de la ruta debe ser mayor a cero.')
+            return value
+        except (InvalidOperation, AttributeError):
+            raise serializers.ValidationError('Ingrese un monto válido en el formato correcto, por ejemplo: 250.000')
 
 
 class AcudienteSerializer(serializers.ModelSerializer):
@@ -17,6 +36,7 @@ class EstudianteSerializer(WritableNestedModelSerializer):
     acudiente = AcudienteSerializer()
     institucion = serializers.SerializerMethodField()
     ruta = serializers.SerializerMethodField()
+    vehiculo_placa = serializers.SerializerMethodField() 
 
     class Meta:
         model = Estudiante
@@ -24,9 +44,9 @@ class EstudianteSerializer(WritableNestedModelSerializer):
             'id', 'acudiente', 'estudiante_foto', 'colegio_id', 'ruta_id',
             'estudiante_nombre', 'estudiante_apellido', 'estudiante_edad',
             'estudiante_curso', 'estudiante_direccion', 'estudiante_fecha_ingreso_ruta',
-            'estudiante_estado', 'institucion', 'ruta'
+            'estudiante_estado', 'pago_ruta', 'institucion', 'ruta', 'vehiculo_placa'
         ]
-        read_only_fields = ['id', 'user_id', 'estudiante_estado', 'institucion', 'ruta']
+        read_only_fields = ['id', 'user_id', 'estudiante_estado', 'institucion', 'ruta', 'vehiculo_placa']
 
     def _get_auth_headers(self):
         """
@@ -218,3 +238,30 @@ class EstudianteSerializer(WritableNestedModelSerializer):
                 'nombre': ruta_data.get('ruta_nombre')
             }
         return None
+    
+    def get_vehiculo_placa(self, obj):
+        """
+        Obtiene la placa del vehículo asociado a la ruta del estudiante.
+        """
+        headers = self._get_auth_headers()
+
+        # Obtener los vehículos asociados a la ruta
+        ruta_id = obj.ruta_id
+        try:
+            # Realizar una solicitud al servicio de vehículos para obtener los vehículos asociados a la ruta
+            vehiculo_response = requests.get(f'http://vehiculos:8006/api/vehiculos/', headers=headers)
+            if vehiculo_response.status_code == 200:
+                vehiculos = vehiculo_response.json()
+                # Filtrar los vehículos por `ruta_id`
+                vehiculos_ruta = [v for v in vehiculos if v.get('ruta_id') == ruta_id]
+                if vehiculos_ruta:
+                    # Asumiendo que hay un solo vehículo por ruta
+                    vehiculo_data = vehiculos_ruta[0]
+                    return vehiculo_data.get('vehiculo_placa', 'Información no disponible')
+                else:
+                    return 'No hay vehículo asociado a esta ruta'
+            else:
+                return 'Error al obtener el vehículo'
+        except Exception as e:
+            return f'Error: {str(e)}'
+

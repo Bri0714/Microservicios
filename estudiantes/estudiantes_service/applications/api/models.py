@@ -31,8 +31,9 @@ class Estudiante(models.Model):
     estudiante_edad = models.PositiveIntegerField(null=False, blank=False)
     estudiante_curso = models.CharField(max_length=50, null=False, blank=False)
     estudiante_direccion = models.CharField(max_length=255, null=False, blank=False)
+    pago_ruta = models.DecimalField(max_digits=12, decimal_places=2, null=False, blank=False)
     estudiante_fecha_ingreso_ruta = models.DateField(null=False, blank=False)
-    estudiante_estado = models.BooleanField(default=True)
+    estudiante_estado = models.BooleanField(default=False)
     
     user_id = models.IntegerField(null=False, blank=False)  # Relación con el usuario (ID externo)
 

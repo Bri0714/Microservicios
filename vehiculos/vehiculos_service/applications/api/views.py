@@ -26,7 +26,7 @@ class VehiculoListCreate(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(user_id=self.request.user.id)
+        serializer.save()
     
 class MonitoraListCreate(viewsets.ModelViewSet):
     queryset = Monitora.objects.all()

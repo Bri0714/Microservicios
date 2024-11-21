@@ -139,6 +139,55 @@ services:
       volumes:
         - ./vehiculos:/app  # Volume asociado al WORKDIR del Dockerfile
 
+  documentos:
+      build:
+        context: ./documentos_vehiculos
+        dockerfile: Dockerfile
+      container_name: documentos
+      ports:
+        - "8008:8008"
+      networks:
+        - backend
+      depends_on:
+        - db_autenticacion
+        - db_documentos
+      volumes:
+        - ./documentos_vehiculos:/app  # Volume asociado al WORKDIR del Dockerfile
+  
+  documentos_worker:
+    build:
+      context: ./documentos_vehiculos
+      dockerfile: Dockerfile
+    container_name: documentos_worker
+    command: sh -c "wait-for-it.sh rutas:8002 -t 60 -- celery -A documentos_service worker -l info"
+    networks:
+      - backend
+    depends_on:
+      - documentos
+      - redis
+      - rutas
+    volumes:
+      - ./documentos_vehiculos:/app  # Volume asociado al WORKDIR del Dockerfile
+    working_dir: /app/documentos_service
+    environment:
+      - SERVICE_EMAIL=service_account
+      - SERVICE_PASSWORD=Parada2023@
+
+  documentos_beat:
+    build:
+      context: ./documentos_vehiculos
+      dockerfile: Dockerfile
+    container_name: documentos_beat
+    command: celery -A documentos_service beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    networks:
+      - backend
+    depends_on:
+      - documentos
+      - redis
+    volumes:
+      - ./documentos_vehiculos:/app  # Volume asociado al WORKDIR del Dockerfile
+    working_dir: /app/documentos_service
+
   redis:
     image: redis:6
     container_name: redis
@@ -238,6 +287,19 @@ services:
         - "5438:5432"
       networks:
         - backend
+
+  db_documentos:
+      image: postgres:13
+      volumes:
+        - postgres_data_documentos:/var/lib/postgresql/data
+      environment:
+        - POSTGRES_DB=documento
+        - POSTGRES_USER=brian
+        - POSTGRES_PASSWORD=parada2023
+      ports:
+        - "5439:5432"
+      networks:
+        - backend
     
 networks:
   backend:
@@ -252,3 +314,4 @@ volumes:
   postgres_data_conductor:
   postgres_data_vehiculo:
   postgres_data_redis:
+  postgres_data_documentos:

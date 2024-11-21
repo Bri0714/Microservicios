@@ -96,8 +96,7 @@ class VehiculoSerializer(WritableNestedModelSerializer):
     #        Monitora.objects.create(vehiculo=vehiculo, **monitora_data)
 #
     #    return vehiculo
-#
-#def update(self, instance, validated_data):
+
     def create(self, validated_data):
         """
         Se asegura de que la ruta existe antes de crear el vehículo.

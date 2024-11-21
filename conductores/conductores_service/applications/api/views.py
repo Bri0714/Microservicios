@@ -9,7 +9,6 @@ class ConductorViewSet(viewsets.ModelViewSet):
     queryset = Conductor.objects.all()
     serializer_class = ConductorSerializer
     
-    
     def get_permissions(self):
         # Permitir crear, listar, actualizar y eliminar si el usuario está autenticado
         if self.action in ['create', 'list', 'destroy', 'update']:

@@ -1,13 +1,43 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
-from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer
+from .serializers import (
+    UserRegisterSerializer, UserLoginSerializer, UserSerializer,
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+)
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.conf import settings
 import jwt
 from datetime import datetime, timedelta
+from rest_framework import generics
+
+
+UserModel = get_user_model()
+
+class PasswordResetRequestView(generics.GenericAPIView):
+    serializer_class = PasswordResetRequestSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetConfirmView(generics.GenericAPIView):
+    serializer_class = PasswordResetConfirmSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'La contraseña ha sido restablecida exitosamente.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]

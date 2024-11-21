@@ -329,6 +329,7 @@ class RutaVehiculoConductorView(APIView):
                 for vehiculo_data in vehiculos:
                     if vehiculo_data.get("ruta_id") == ruta_id:  # Verificar que el vehículo esté asociado a la ruta actual
                         response_data["vehiculo"] = {
+                            "id" : vehiculo_data.get("id"),
                             "placa": vehiculo_data.get("vehiculo_placa"),
                             "marca": vehiculo_data.get("vehiculo_marca"),
                             "modelo": vehiculo_data.get("vehiculo_modelo"),
@@ -372,4 +373,66 @@ class RutaVehiculoConductorView(APIView):
             return Response({'error': 'Service request failed', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception as e:
             return Response({'error': 'An unexpected error occurred', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
+# Nueva clase para obtener la información de un vehículo y sus documentos asociados
+class VehiculoDetallesView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, vehiculo_id):
+        headers = {"Authorization": request.headers.get("Authorization")}
+
+        try:
+            # Obtener la información del vehículo
+            vehiculo_response = requests.get(
+                f'http://vehiculos:8006/api/vehiculos/{vehiculo_id}/',
+                headers=headers
+            )
+            if vehiculo_response.status_code == 404:
+                return Response({"error": "El vehículo con el ID proporcionado no existe."}, status=status.HTTP_404_NOT_FOUND)
+            vehiculo_response.raise_for_status()
+            vehiculo_data = vehiculo_response.json()
+
+            # Preparar la respuesta con los datos del vehículo
+            response_data = {
+                "vehiculo": {
+                    "id": vehiculo_data.get("id"),
+                    "placa": vehiculo_data.get("vehiculo_placa"),
+                    "marca": vehiculo_data.get("vehiculo_marca"),
+                    "modelo": vehiculo_data.get("vehiculo_modelo"),
+                    "imagen": vehiculo_data.get("vehiculo_imagen")
+                },
+                "documentos": {
+                    "SOAT": "El documento SOAT no ha sido registrado para este vehículo.",
+                    "Tecnomecanica": "El documento Tecnomecánica no ha sido registrado para este vehículo.",
+                    "Poliza": "El documento Póliza no ha sido registrado para este vehículo."
+                }
+            }
+
+            # Obtener los documentos asociados al vehículo
+            documentos_response = requests.get(
+                f'http://documentos:8008/api/documentos/?vehiculo_id={vehiculo_id}',
+                headers=headers
+            )
+            if documentos_response.status_code == 200:
+                documentos = documentos_response.json()
+                for documento in documentos:
+                    tipo_documento = documento.get("tipo_documento")
+                    if tipo_documento in response_data["documentos"]:
+                        response_data["documentos"][tipo_documento] = {
+                            "id": documento.get("id"),
+                            "fecha_expedicion": documento.get("fecha_expedicion"),
+                            "fecha_expiracion": documento.get("fecha_expiracion"),
+                            "estado": documento.get("estado")
+                        }
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except requests.exceptions.ConnectionError:
+            return Response({"error": "Error de conexión al servicio de vehículos"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except requests.exceptions.Timeout:
+            return Response({"error": "Tiempo de espera agotado al obtener la información del vehículo"}, status=status.HTTP_504_GATEWAY_TIMEOUT)
+        except requests.exceptions.RequestException as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"error": "Ocurrió un error inesperado", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

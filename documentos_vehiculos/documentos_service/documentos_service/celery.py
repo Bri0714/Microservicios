@@ -5,10 +5,10 @@ from django.apps import apps
 from django.conf import settings
 
 # Establecer el módulo de configuración de Django para Celery
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'conductores_service.settings.local')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'documentos_service.settings.local')
 
 # Crear la instancia de Celery
-app = Celery('conductores_service')
+app = Celery('documentos_service')
 
 # Cargar la configuración desde los ajustes de Django
 app.config_from_object('django.conf:settings', namespace='CELERY')

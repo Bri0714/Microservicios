@@ -170,8 +170,7 @@ services:
       - ./documentos_vehiculos:/app  # Volume asociado al WORKDIR del Dockerfile
     working_dir: /app/documentos_service
     environment:
-      - SERVICE_EMAIL=service_account
-      - SERVICE_PASSWORD=Parada2023@
+      - SERVICE_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJleHAiOjE3NjM4NDkxODEsImlhdCI6MTczMjMxMzE4MX0.Nc9Tt0OWvKjQnjTCDpBGA5wKGgRCZLV5W9xLaRgFjSI
 
   documentos_beat:
     build:
@@ -187,6 +186,21 @@ services:
     volumes:
       - ./documentos_vehiculos:/app  # Volume asociado al WORKDIR del Dockerfile
     working_dir: /app/documentos_service
+
+  pagoymulta:
+      build:
+        context: ./PagosYMultas
+        dockerfile: Dockerfile
+      container_name: pagoymulta
+      ports:
+        - "8009:8009"
+      networks:
+        - backend
+      depends_on:
+        - db_autenticacion
+        - db_estudiante
+      volumes:
+        - ./PagosYMultas:/app  # Volume asociado al WORKDIR del Dockerfile
 
   redis:
     image: redis:6
@@ -300,6 +314,20 @@ services:
         - "5439:5432"
       networks:
         - backend
+
+  db_pago:
+      image: postgres:13
+      volumes:
+        - postgres_data_pagos:/var/lib/postgresql/data
+      environment:
+        - POSTGRES_DB=pagoymulta
+        - POSTGRES_USER=brian
+        - POSTGRES_PASSWORD=parada2023
+      ports:
+        - "5440:5432"
+      networks:
+        - backend
+    
     
 networks:
   backend:
@@ -315,3 +343,4 @@ volumes:
   postgres_data_vehiculo:
   postgres_data_redis:
   postgres_data_documentos:
+  postgres_data_pagos:

@@ -30,8 +30,6 @@ def get_secrets(secret_name):
         raise ImproperlyConfigured(f"El archivo {secrets_file} no fue encontrado")
 
 SECRET_KEY = get_secrets('SECRET_KEY')
-SERVICE_TOKEN = get_secrets('SERVICE_TOKEN')
-
 
 # INSTALACIONES POR DEFECTO DE DJANGO 
 DJANGO_APPS = (
@@ -54,23 +52,22 @@ LOCAL_APPS = (
 THIRD_PARTY_APPS = (
     'rest_framework',
     'corsheaders',
-    'django_celery_beat',
+    #'django_celery_beat',
 )
 
 # DEFINICION DE APLICACIONES EN PYTHON 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
-
 # Celery Configuration Options
-CELERY_BROKER_URL = 'redis://redis:6379/1'  # URL del broker (Redis)
-CELERY_RESULT_BACKEND = 'redis://redis:6379/1'  # Backend para almacenar resultados
+#CELERY_BROKER_URL = 'redis://redis:6379/0'  # URL del broker (Redis)
+#CELERY_RESULT_BACKEND = 'redis://redis:6379/0'  # Backend para almacenar resultados
+#CELERY_BEAT_SCHEDULE = {
+#    'update_licencia_activa_daily': {
+#        'task': 'applications.api.tasks.update_licencia_activa',
+#        'schedule': 900.0,  # Ejecutar cada 5 minutos 
+#    },
+#}
 
-CELERY_BEAT_SCHEDULE = {
-    'update_estado_documentos_daily': {
-        'task': 'applications.api.tasks.update_estado_documentos',
-        'schedule': 900.0,  # Ejecutar cada 15 minutos
-    },
-}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -83,7 +80,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'documentos_service.urls'
+ROOT_URLCONF = 'pagos_service.urls'
 
 TEMPLATES = [
     {
@@ -101,7 +98,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'documentos_service.wsgi.application'
+WSGI_APPLICATION = 'pagos_service.wsgi.application'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

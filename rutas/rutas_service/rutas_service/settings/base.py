@@ -30,6 +30,8 @@ def get_secrets(secret_name):
         raise ImproperlyConfigured(f"El archivo {secrets_file} no fue encontrado")
 
 SECRET_KEY = get_secrets('SECRET_KEY')
+SERVICE_ACCOUNT_USER_ID = 7
+
 
 # INSTALACIONES POR DEFECTO DE DJANGO 
 DJANGO_APPS = (

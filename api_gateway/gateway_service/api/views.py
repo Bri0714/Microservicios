@@ -436,3 +436,66 @@ class VehiculoDetallesView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             return Response({"error": "Ocurrió un error inesperado", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+# Nueva clase para obtener la información del estudiante y sus pagos
+
+class EstudianteDetallesView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, estudiante_id):
+        headers = {"Authorization": request.headers.get("Authorization")}
+
+        # Obtener datos del estudiante
+        try:
+            estudiante_response = requests.get(
+                f'http://estudiantes:8004/api/estudiantes/{estudiante_id}/',
+                headers=headers
+            )
+            if estudiante_response.status_code == 404:
+                return Response({'error': 'El estudiante con el ID proporcionado no existe.'}, status=status.HTTP_404_NOT_FOUND)
+            estudiante_response.raise_for_status()
+            estudiante_data = estudiante_response.json()
+            # Eliminar datos del acudiente
+            estudiante_data.pop('acudiente', None)
+        except requests.exceptions.RequestException as e:
+            return Response({'error': 'Error al conectar con el servicio de estudiantes.', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        # Obtener datos de pagos
+        try:
+            pagos_response = requests.get(
+                f'http://pagoymulta:8009/api/pagos/?estudiante_id={estudiante_id}',
+                headers=headers
+            )
+            pagos_response.raise_for_status()
+            pagos_data = pagos_response.json()
+        except requests.exceptions.RequestException as e:
+            return Response({'error': 'Error al conectar con el servicio de pagos.', 'details': str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        # Crear un diccionario de pagos por mes
+        pagos_por_mes = {pago['mes_a_pagar']: pago for pago in pagos_data}
+
+        # Meses desde Febrero hasta Noviembre
+        meses = ['Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre']
+
+        lista_pagos = []
+        for mes in meses:
+            if mes in pagos_por_mes:
+                pago = pagos_por_mes[mes]
+                # Eliminar datos del estudiante en el pago
+                pago.pop('estudiante', None)
+                lista_pagos.append(pago)
+            else:
+                lista_pagos.append({
+                    'mes_a_pagar': mes,
+                    'estado_pago': False,
+                    'mensaje': f'No ha registrado el pago del mes {mes}.'
+                })
+
+        response_data = {
+            'estudiante': estudiante_data,
+            'pagos': lista_pagos
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)

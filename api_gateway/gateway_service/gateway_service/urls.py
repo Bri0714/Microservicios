@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import InstitutionWithRoutesView, EstudiantesPorInstitucionYRutaView, RutaVehiculoConductorView, VehiculoDetallesView
+from api.views import InstitutionWithRoutesView, EstudiantesPorInstitucionYRutaView, RutaVehiculoConductorView, VehiculoDetallesView, EstudianteDetallesView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,5 +31,8 @@ urlpatterns = [
     
     # Nueva ruta para obtener la información del vehículo y sus documentos asociados
     path('api/vehiculos/<int:vehiculo_id>/', VehiculoDetallesView.as_view()),
+    
+    # Nueva ruta para obtener la información del estudiante y sus pagos
+    path('api/estudiantes/<int:estudiante_id>/', EstudianteDetallesView.as_view()),
     
 ]

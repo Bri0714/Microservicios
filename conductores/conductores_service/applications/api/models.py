@@ -26,6 +26,8 @@ class Conductor(models.Model):
         # Verificar si la licencia ha expirado y actualizar el campo licencia_activa
         if self.fecha_expiracion < date.today():
             self.licencia_activa = False
+        else:
+            self.licencia_activa = True
         
         super().save(*args, **kwargs)
 
